@@ -6,6 +6,20 @@ import (
 	"sync"
 )
 
+type TCPPeer struct {
+	conn net.Conn
+	//if we dial and retrieve a connection, then outbound is true
+	//if we accept and retrieve a connection, then outbound is false
+	outbound bool
+}
+
+func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
+	return &TCPPeer{
+		conn:     conn,
+		outbound: outbound,
+	}
+}
+
 type TCPTransport struct {
 	listenAddress string
 	listener      net.Listener
@@ -34,9 +48,11 @@ func (t *TCPTransport) startAcceptLoop() {
 		if err != nil {
 			fmt.Printf("TCP accept error: %v\n", err)
 		}
+
 		go t.handleConn(conn)
 	}
 }
 func (t *TCPTransport) handleConn(conn net.Conn) {
-	fmt.Printf("new incomming connection: %v\n", conn.RemoteAddr())
+	peer := NewTCPPeer(conn, true)
+	fmt.Printf("new incomming connection: %v\n", peer)
 }
