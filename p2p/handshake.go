@@ -1,7 +1,11 @@
 package p2p
 
-type HandshakeFunc func(any) error
+import "fmt"
 
-func NopHandshakeFunc(any) error {
+var ErrInvalidHandshake = fmt.Errorf("invalid handshake")
+
+type HandshakeFunc func(Peer) error
+
+func NopHandshakeFunc(peer Peer) error {
 	return nil
 }
