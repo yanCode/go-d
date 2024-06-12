@@ -69,9 +69,15 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 		return
 	}
 	msg := &Message{}
+	//buf := make([]byte, 2000)
 	for {
+		//if err := t.Decoder.Decode(conn, msg); err != nil {
+		//	fmt.Printf("TCP error decoding message: %v\n", err)
+		//	continue
+		//}
+
 		if err := t.Decoder.Decode(conn, msg); err != nil {
-			fmt.Printf("TCP error decoding message: %v\n", err)
+			fmt.Printf("TCP error reading message: %v\n", err)
 			continue
 		}
 		fmt.Printf("got message: %v\n", msg)
