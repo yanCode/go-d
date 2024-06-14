@@ -26,7 +26,7 @@ func NewStorage(opts StorageOpts) *Storage {
 
 // writeFileStream writes data from an io.Reader to a file identified by the key.
 
-func (s *Storage) writeFileStream(key string, reader io.Reader) error {
+func (s *Storage) writeStream(key string, reader io.Reader) error {
 	pathName := s.PathTransformFunc(key)
 	filename := "somefilename"
 	filePath := filepath.Join(pathName, filename)
@@ -34,7 +34,7 @@ func (s *Storage) writeFileStream(key string, reader io.Reader) error {
 		return err
 	}
 
-	file, err := os.Open(filePath)
+	file, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
