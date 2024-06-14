@@ -13,6 +13,10 @@ type TCPPeer struct {
 	outbound bool
 }
 
+func (t *TCPPeer) Close() error {
+	return t.conn.Close()
+}
+
 func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
 	return &TCPPeer{
 		conn:     conn,
@@ -24,6 +28,7 @@ type TCPTransportOptions struct {
 	ListenAddr    string
 	HandshakeFunc HandshakeFunc
 	Decoder       Decoder
+	OnPeer        func(Peer) error
 }
 
 type TCPTransport struct {
@@ -65,26 +70,35 @@ func (t *TCPTransport) startAcceptLoop() {
 }
 
 func (t *TCPTransport) handleConn(conn net.Conn) {
+	var err error
+	defer func() {
+		fmt.Printf("closing connection: %v\n", conn)
+		conn.Close()
+	}()
 	peer := NewTCPPeer(conn, true)
 	fmt.Printf("new peer: %v\n", peer)
-	//if err := t.HandshakeFunc(peer); err != nil {
-	//	conn.Close()
-	//	fmt.Printf("TCP handshake error: %v\n", err)
-	//	return
-	//}
-	rpc := &Rpc{}
+	if err := t.HandshakeFunc(peer); err != nil {
+		conn.Close()
+		fmt.Printf("TCP handshake error: %v\n", err)
+		return
+	}
+	if t.OnPeer != nil {
+		if err = t.OnPeer(peer); err != nil {
+			conn.Close()
+			fmt.Printf("OnPeer error: %v\n", err)
+			return
+		}
+	}
+	rpc := Rpc{}
 	//buf := make([]byte, 2000)
 	for {
-		//if err := t.Decoder.Decode(conn, rpc); err != nil {
-		//	fmt.Printf("TCP error decoding message: %v\n", err)
-		//	continue
-		//}
 
-		if err := t.Decoder.Decode(conn, rpc); err != nil {
+		if err := t.Decoder.Decode(conn, &rpc); err != nil {
 			fmt.Printf("TCP error reading message: %v\n", err)
 			continue
 		}
 		rpc.From = conn.RemoteAddr()
+		t.rpcCh <- rpc
 		fmt.Printf("got message: %+v\n", rpc)
 	}
 
