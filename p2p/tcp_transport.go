@@ -95,11 +95,15 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 
 		if err := t.Decoder.Decode(conn, &rpc); err != nil {
 			fmt.Printf("TCP error reading message: %v\n", err)
-			continue
+			return
 		}
 		rpc.From = conn.RemoteAddr()
 		t.rpcCh <- rpc
 		fmt.Printf("got message: %+v\n", rpc)
 	}
 
+}
+
+func (t *TCPTransport) Close() error {
+	return t.listener.Close()
 }
