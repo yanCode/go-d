@@ -12,9 +12,14 @@ import (
 	"strings"
 )
 
-type PathTransformFunc func(string) string
+type PathTransformFunc func(string) Pathkey
 
-func CasPathTransformFunc(key string) string {
+type Pathkey struct {
+	Pathname string
+	Original string
+}
+
+func CasPathTransformFunc(key string) Pathkey {
 	hash := sha1.Sum([]byte(key))
 	hashStr := hex.EncodeToString(hash[:])
 
@@ -25,7 +30,11 @@ func CasPathTransformFunc(key string) string {
 		from, to := i*block_size, (i+1)*block_size
 		paths[i] = hashStr[from:to]
 	}
-	return strings.Join(paths, "/")
+	//return strings.Join(paths, "/")
+	return Pathkey{
+		Original: hashStr,
+		Pathname: strings.Join(paths, "/"),
+	}
 }
 
 type StorageOpts struct {
@@ -43,7 +52,7 @@ func NewStorage(opts StorageOpts) *Storage {
 
 func (s *Storage) writeStream(key string, reader io.Reader) error {
 	pathName := s.PathTransformFunc(key)
-	if err := os.MkdirAll(pathName, os.ModePerm); err != nil {
+	if err := os.MkdirAll(pathName.Pathname, os.ModePerm); err != nil {
 		return err
 	}
 	buf := new(bytes.Buffer)
@@ -53,7 +62,7 @@ func (s *Storage) writeStream(key string, reader io.Reader) error {
 	}
 	filenameBytes := md5.Sum(buf.Bytes())
 	filename := hex.EncodeToString(filenameBytes[:])
-	file, err := os.Create(filepath.Join(pathName, filename))
+	file, err := os.Create(filepath.Join(pathName.Pathname, filename))
 
 	if err != nil {
 		return err
