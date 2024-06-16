@@ -1,16 +1,29 @@
 package main
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type PathTransformFunc func(string) string
 
-var DefaultPathTransformFunc = func(path string) string {
-	return path
+func CasPathTransformFunc(key string) string {
+	hash := sha1.Sum([]byte(key))
+	hashStr := hex.EncodeToString(hash[:])
+
+	block_size := 5
+	sliceLen := len(hashStr) / block_size
+	paths := make([]string, sliceLen)
+	for i := 0; i < sliceLen; i++ {
+		from, to := i*block_size, (i+1)*block_size
+		paths[i] = hashStr[from:to]
+	}
+	return strings.Join(paths, "/")
 }
 
 type StorageOpts struct {
