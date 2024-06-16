@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
 	"io"
@@ -41,13 +43,18 @@ func NewStorage(opts StorageOpts) *Storage {
 
 func (s *Storage) writeStream(key string, reader io.Reader) error {
 	pathName := s.PathTransformFunc(key)
-	filename := "somefilename"
-	filePath := filepath.Join(pathName, filename)
 	if err := os.MkdirAll(pathName, os.ModePerm); err != nil {
 		return err
 	}
+	buf := new(bytes.Buffer)
+	_, err := io.Copy(buf, reader)
+	if err != nil {
+		return err
+	}
+	filenameBytes := md5.Sum(buf.Bytes())
+	filename := hex.EncodeToString(filenameBytes[:])
+	file, err := os.Create(filepath.Join(pathName, filename))
 
-	file, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
