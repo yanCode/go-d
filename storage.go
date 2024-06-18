@@ -86,17 +86,21 @@ func (s *Storage) Read(key string) (io.Reader, error) {
 	return buffer, err
 
 }
+
 func (s *Storage) Delete(key string) error {
 	pathKey := s.PathTransformFunc(key)
 	return os.RemoveAll(pathKey.PathName)
 }
+
 func (s *Storage) readStream(key string) (*os.File, error) {
 	pathKey := s.PathTransformFunc(key)
-	return os.Open(pathKey.PathName)
+	return os.Open(filepath.Join(s.RootDir, pathKey.PathName))
 }
+
 func (s *Storage) Has(key string) bool {
 	pathKey := s.PathTransformFunc(key)
-	_, err := os.Stat(pathKey.PathName)
+	fullPathWithRoot := filepath.Join(s.RootDir, pathKey.PathName)
+	_, err := os.Stat(fullPathWithRoot)
 	return !errors.Is(err, os.ErrNotExist)
 }
 
@@ -104,7 +108,8 @@ func (s *Storage) Has(key string) bool {
 
 func (s *Storage) writeStream(key string, reader io.Reader) error {
 	pathName := s.PathTransformFunc(key)
-	if err := os.MkdirAll(pathName.PathName, os.ModePerm); err != nil {
+	pathNameWithRoot := filepath.Join(s.RootDir, pathName.PathName)
+	if err := os.MkdirAll(pathNameWithRoot, os.ModePerm); err != nil {
 		return err
 	}
 	buf := new(bytes.Buffer)
@@ -114,7 +119,7 @@ func (s *Storage) writeStream(key string, reader io.Reader) error {
 	}
 	filenameBytes := md5.Sum(buf.Bytes())
 	filename := hex.EncodeToString(filenameBytes[:])
-	file, err := os.Create(filepath.Join(pathName.PathName, filename))
+	file, err := os.Create(filepath.Join(pathNameWithRoot, filename))
 
 	if err != nil {
 		return err
@@ -125,4 +130,8 @@ func (s *Storage) writeStream(key string, reader io.Reader) error {
 	}
 	log.Printf("copied %d bytes to disk: %s \n", result, pathName)
 	return nil
+}
+
+func (s *Storage) Clear() error {
+	return os.RemoveAll(s.RootDir)
 }

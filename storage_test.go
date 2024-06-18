@@ -23,13 +23,26 @@ func TestPathTransformFunc(t *testing.T) {
 }
 
 func TestStorage(t *testing.T) {
+
 	opts := StorageOpts{
 		PathTransformFunc: CasPathTransformFunc,
+		RootDir:           "/Users/y/drills/go-d-system/assets",
 	}
 	s := NewStorage(opts)
-	data := bytes.NewReader([]byte("hello"))
-	if err := s.writeStream("my_pic", data); err != nil {
-		t.Error(err)
+	defer teardown(t, s)
+	for i := 0; i < 50; i++ {
+		key := fmt.Sprintf("key_%d", i)
+		data := []byte("hello world jpg bytes of number " + fmt.Sprintf("%d", i))
+		if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
+			t.Error(err)
+		}
+		if ok := s.Has(key); !ok {
+			t.Errorf("key %s should exist", key)
+		}
+		_, err := s.Read(key)
+		if err != nil {
+			t.Error(err)
+		}
 	}
 }
 func TestStorage_Delete(t *testing.T) {
@@ -43,6 +56,26 @@ func TestStorage_Delete(t *testing.T) {
 		t.Error(err)
 	}
 	if err := s.Delete(key); err != nil {
+		t.Error(err)
+	}
+}
+func teardown(t *testing.T, s *Storage) {
+	if err := s.Clear(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestStorage_Read(t *testing.T) {
+	opts := StorageOpts{
+		PathTransformFunc: CasPathTransformFunc,
+	}
+	s := NewStorage(opts)
+	key := "my_pic"
+	data := []byte("hello world")
+	if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
+		t.Error(err)
+	}
+	if _, err := s.Read(key); err != nil {
 		t.Error(err)
 	}
 }
