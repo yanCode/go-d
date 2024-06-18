@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -12,14 +13,25 @@ import (
 	"strings"
 )
 
-type PathTransformFunc func(string) Pathkey
+type PathTransformFunc func(string) PathKey
 
-type Pathkey struct {
-	Pathname string
-	Original string
+type PathKey struct {
+	PathName string
+	FileName string
 }
 
-func CasPathTransformFunc(key string) Pathkey {
+func (p PathKey) FirstPathName() string {
+	slice := strings.Split(p.PathName, "/")
+	if len(slice) == 0 {
+		return ""
+	}
+	return slice[0]
+}
+func (p PathKey) FullPath() string {
+	return fmt.Sprintf("%s/%s", p.PathName, p.FileName)
+}
+
+func CasPathTransformFunc(key string) PathKey {
 	hash := sha1.Sum([]byte(key))
 	hashStr := hex.EncodeToString(hash[:])
 
@@ -31,9 +43,9 @@ func CasPathTransformFunc(key string) Pathkey {
 		paths[i] = hashStr[from:to]
 	}
 	//return strings.Join(paths, "/")
-	return Pathkey{
-		Original: hashStr,
-		Pathname: strings.Join(paths, "/"),
+	return PathKey{
+		FileName: hashStr,
+		PathName: strings.Join(paths, "/"),
 	}
 }
 
@@ -47,12 +59,30 @@ type Storage struct {
 func NewStorage(opts StorageOpts) *Storage {
 	return &Storage{opts}
 }
+func (s *Storage) Read(key string) (io.Reader, error) {
+	file, err := s.readStream(key)
+	if err != nil {
+		return nil, err
+	}
+	buffer := new(bytes.Buffer)
+	_, err = io.Copy(buffer, file)
+	return buffer, err
+
+}
+func (s *Storage) Delete(key string) error {
+	pathKey := s.PathTransformFunc(key)
+	return os.Remove(pathKey.PathName)
+}
+func (s *Storage) readStream(key string) (*os.File, error) {
+	pathKey := s.PathTransformFunc(key)
+	return os.Open(pathKey.PathName)
+}
 
 // writeFileStream writes data from an io.Reader to a file identified by the key.
 
 func (s *Storage) writeStream(key string, reader io.Reader) error {
 	pathName := s.PathTransformFunc(key)
-	if err := os.MkdirAll(pathName.Pathname, os.ModePerm); err != nil {
+	if err := os.MkdirAll(pathName.PathName, os.ModePerm); err != nil {
 		return err
 	}
 	buf := new(bytes.Buffer)
@@ -62,7 +92,7 @@ func (s *Storage) writeStream(key string, reader io.Reader) error {
 	}
 	filenameBytes := md5.Sum(buf.Bytes())
 	filename := hex.EncodeToString(filenameBytes[:])
-	file, err := os.Create(filepath.Join(pathName.Pathname, filename))
+	file, err := os.Create(filepath.Join(pathName.PathName, filename))
 
 	if err != nil {
 		return err

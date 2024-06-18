@@ -12,12 +12,12 @@ func TestPathTransformFunc(t *testing.T) {
 	expected_original := "5a57270c08000be514f9e954b3fa37e489038be1"
 	key := "my_test_file"
 	pathKey := CasPathTransformFunc(key)
-	fmt.Println(pathKey.Original)
-	if pathKey.Pathname != expected_path {
-		t.Errorf("Pathname got %s, want %s", pathKey, expected_path)
+	fmt.Println(pathKey.FileName)
+	if pathKey.PathName != expected_path {
+		t.Errorf("PathName got %s, want %s", pathKey, expected_path)
 	}
-	if pathKey.Original != expected_original {
-		t.Errorf("Original got %s, want %s", pathKey.Original, expected_original)
+	if pathKey.FileName != expected_original {
+		t.Errorf("FileName got %s, want %s", pathKey.FileName, expected_original)
 	}
 
 }
