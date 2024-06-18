@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+const defaultRootFolderName = "d-storage"
+
 type PathTransformFunc func(string) PathKey
 
 type PathKey struct {
@@ -49,7 +51,15 @@ func CasPathTransformFunc(key string) PathKey {
 	}
 }
 
+var DefaultPathTransformFunc = func(key string) PathKey {
+	return PathKey{
+		PathName: key,
+		FileName: key,
+	}
+}
+
 type StorageOpts struct {
+	RootDir           string
 	PathTransformFunc PathTransformFunc
 }
 type Storage struct {
@@ -57,6 +67,12 @@ type Storage struct {
 }
 
 func NewStorage(opts StorageOpts) *Storage {
+	if opts.PathTransformFunc == nil {
+		opts.PathTransformFunc = DefaultPathTransformFunc
+	}
+	if len(opts.RootDir) == 0 {
+		opts.RootDir = defaultRootFolderName
+	}
 	return &Storage{opts}
 }
 func (s *Storage) Read(key string) (io.Reader, error) {
