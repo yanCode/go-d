@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -87,11 +88,16 @@ func (s *Storage) Read(key string) (io.Reader, error) {
 }
 func (s *Storage) Delete(key string) error {
 	pathKey := s.PathTransformFunc(key)
-	return os.Remove(pathKey.PathName)
+	return os.RemoveAll(pathKey.PathName)
 }
 func (s *Storage) readStream(key string) (*os.File, error) {
 	pathKey := s.PathTransformFunc(key)
 	return os.Open(pathKey.PathName)
+}
+func (s *Storage) Has(key string) bool {
+	pathKey := s.PathTransformFunc(key)
+	_, err := os.Stat(pathKey.PathName)
+	return !errors.Is(err, os.ErrNotExist)
 }
 
 // writeFileStream writes data from an io.Reader to a file identified by the key.
@@ -113,7 +119,7 @@ func (s *Storage) writeStream(key string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	result, err := io.Copy(file, reader)
+	result, err := io.Copy(file, buf)
 	if err != nil {
 		return err
 	}

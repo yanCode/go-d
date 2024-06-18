@@ -32,3 +32,17 @@ func TestStorage(t *testing.T) {
 		t.Error(err)
 	}
 }
+func TestStorage_Delete(t *testing.T) {
+	opts := StorageOpts{
+		PathTransformFunc: CasPathTransformFunc,
+	}
+	s := NewStorage(opts)
+	key := "my_pic"
+	data := []byte("hello world")
+	if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
+		t.Error(err)
+	}
+	if err := s.Delete(key); err != nil {
+		t.Error(err)
+	}
+}
