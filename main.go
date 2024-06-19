@@ -28,11 +28,13 @@ func main() {
 		Transport:         *tcpTransport,
 	}
 	s := NewFileServer(fileServerOptions)
+	go func() {
+		time.Sleep(time.Second * 3)
+		fmt.Println("start to stop file server")
+		s.Stop()
+	}()
 	if err := s.Start(); err != nil {
 		log.Fatal(err)
 	}
-	go func() {
-		time.Sleep(time.Second * 3)
-		s.Stop()
-	}()
+
 }

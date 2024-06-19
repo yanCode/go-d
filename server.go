@@ -35,7 +35,7 @@ func (s *FileServer) Start() error {
 	if err := s.Transport.ListenAddAccept(); err != nil {
 		return err
 	}
-	go s.loop()
+	s.loop()
 	return nil
 }
 func (s *FileServer) loop() {
@@ -49,6 +49,6 @@ func (s *FileServer) loop() {
 	}
 }
 func (s *FileServer) Stop() {
-	fmt.Printf("[%s] stopping fileserver...\n", "todo")
 	close(s.quitch)
+	fmt.Printf("[%s] stopping fileserver...\n", "todo")
 }
