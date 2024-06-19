@@ -1,6 +1,7 @@
 package p2p
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -46,6 +47,7 @@ func NewTCPTransport(opts TCPTransportOptions) *TCPTransport {
 		rpcCh:               make(chan Rpc),
 	}
 }
+
 func (t *TCPTransport) Consume() <-chan Rpc {
 	return t.rpcCh
 }
@@ -61,6 +63,9 @@ func (t *TCPTransport) ListenAddAccept() error {
 func (t *TCPTransport) startAcceptLoop() {
 	for {
 		conn, err := t.listener.Accept()
+		if errors.Is(err, net.ErrClosed) {
+			return
+		}
 		if err != nil {
 			fmt.Printf("TCP accept error: %v\n", err)
 		}

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github/yanCode/go-d/p2p"
+	"log"
 )
 
 type FileServer struct {
@@ -39,6 +40,10 @@ func (s *FileServer) Start() error {
 	return nil
 }
 func (s *FileServer) loop() {
+	defer func() {
+		s.Transport.Close()
+		log.Println("file server stopped for user's quit action..")
+	}()
 	for {
 		select {
 		case msg := <-s.Transport.Consume():
