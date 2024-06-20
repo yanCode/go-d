@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github/yanCode/go-d/p2p"
 	"log"
-	"time"
 )
 
 func OnPeer(peer p2p.Peer) error {
@@ -13,9 +12,9 @@ func OnPeer(peer p2p.Peer) error {
 	return nil
 }
 
-func main() {
+func makeServer(listenAddr string, nodes ...string) *FileServer {
 	tpcTransportOptions := p2p.TCPTransportOptions{
-		ListenAddr:    ":3000",
+		ListenAddr:    listenAddr,
 		HandshakeFunc: p2p.NopHandshakeFunc,
 		Decoder:       p2p.DefaultDecoder{},
 		OnPeer:        OnPeer, //todo
@@ -23,18 +22,20 @@ func main() {
 	tcpTransport := p2p.NewTCPTransport(tpcTransportOptions)
 
 	fileServerOptions := FileServerOptions{
-		StorageRoot:       "/Users/y/drills/go-d-system/assets_3000",
+		StorageRoot:       "/Users/y/drills/go-d-system/" + listenAddr + "_3000",
 		PathTransformFunc: CasPathTransformFunc,
 		Transport:         *tcpTransport,
+		BootstrapNodes:    nodes,
 	}
-	s := NewFileServer(fileServerOptions)
-	go func() {
-		time.Sleep(time.Second * 3)
-		fmt.Println("start to stop file server")
-		s.Stop()
-	}()
-	if err := s.Start(); err != nil {
-		log.Fatal(err)
-	}
+	return NewFileServer(fileServerOptions)
+}
 
+func main() {
+
+	s1 := makeServer(":3000", "")
+	go func() {
+		log.Fatal(s1.Start())
+	}()
+	s2 := makeServer(":4000", ":3000")
+	log.Fatal(s2.Start())
 }
