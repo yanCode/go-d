@@ -7,16 +7,15 @@ import (
 )
 
 type FileServer struct {
-	FileServerOptions
-	storage *Storage
-	quitch  chan struct{}
+	FileServerOptions `json:"file_server_options"`
+	storage           *Storage      `json:"storage,omitempty"`
+	quitCh            chan struct{} `json:"quitCh,omitempty"`
 }
 type FileServerOptions struct {
-	ListenAddr          string
-	StorageRoot         string
-	PathTransformFunc   PathTransformFunc
-	Transport           p2p.TCPTransport
-	TCPTransportOptions p2p.TCPTransportOptions
+	StorageRoot       string
+	PathTransformFunc PathTransformFunc
+	Transport         p2p.TCPTransport
+	BootstrapNodes    []string
 }
 
 func NewFileServer(opts FileServerOptions) *FileServer {
@@ -27,7 +26,7 @@ func NewFileServer(opts FileServerOptions) *FileServer {
 	return &FileServer{
 		FileServerOptions: opts,
 		storage:           NewStorage(storeOpts),
-		quitch:            make(chan struct{}),
+		quitCh:            make(chan struct{}),
 	}
 }
 
@@ -48,12 +47,12 @@ func (s *FileServer) loop() {
 		select {
 		case msg := <-s.Transport.Consume():
 			fmt.Println(msg)
-		case <-s.quitch:
+		case <-s.quitCh:
 			return
 		}
 	}
 }
 func (s *FileServer) Stop() {
-	close(s.quitch)
+	close(s.quitCh)
 	fmt.Printf("[%s] stopping fileserver...\n", "todo")
 }
