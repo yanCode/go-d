@@ -29,6 +29,17 @@ func NewFileServer(opts FileServerOptions) *FileServer {
 		quitCh:            make(chan struct{}),
 	}
 }
+func (s *FileServer) bootstrapNetwork() error {
+	for _, addr := range s.BootstrapNodes {
+		go func(addr string) {
+			if err := s.Transport.Dial(addr); err != nil {
+				log.Println("dial error:", err)
+				panic(err)
+			}
+		}(addr)
+	}
+	return nil
+}
 
 func (s *FileServer) Start() error {
 	fmt.Printf("[%s] starting fileserver...\n", "todo")
@@ -55,4 +66,8 @@ func (s *FileServer) loop() {
 func (s *FileServer) Stop() {
 	close(s.quitCh)
 	fmt.Printf("[%s] stopping fileserver...\n", "todo")
+}
+
+func (s *FileServer) Has(key string) bool {
+	return s.storage.Has(key)
 }

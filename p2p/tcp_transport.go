@@ -70,17 +70,25 @@ func (t *TCPTransport) startAcceptLoop() {
 			fmt.Printf("TCP accept error: %v\n", err)
 		}
 		fmt.Printf("new incomming connection: %v\n", conn)
-		go t.handleConn(conn)
+		go t.handleConn(conn, false)
 	}
 }
+func (t *TCPTransport) Dial(addr string) error {
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return nil
+	}
+	go t.handleConn(conn, true)
+	return nil
+}
 
-func (t *TCPTransport) handleConn(conn net.Conn) {
+func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
 	var err error
 	defer func() {
 		fmt.Printf("closing connection: %v\n", conn)
 		conn.Close()
 	}()
-	peer := NewTCPPeer(conn, true)
+	peer := NewTCPPeer(conn, isOutbound)
 	fmt.Printf("new peer: %v\n", peer)
 	if err := t.HandshakeFunc(peer); err != nil {
 		conn.Close()
