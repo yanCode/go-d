@@ -46,6 +46,11 @@ func (s *FileServer) Start() error {
 	if err := s.Transport.ListenAddAccept(); err != nil {
 		return err
 	}
+	if len(s.BootstrapNodes) > 0 {
+		if err := s.bootstrapNetwork(); err != nil {
+			return err
+		}
+	}
 	s.loop()
 	return nil
 }
