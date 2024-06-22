@@ -32,6 +32,7 @@ func NewFileServer(opts FileServerOptions) *FileServer {
 func (s *FileServer) bootstrapNetwork() error {
 	for _, addr := range s.BootstrapNodes {
 		go func(addr string) {
+			fmt.Printf("attemping to connect to connect with remote", addr)
 			if err := s.Transport.Dial(addr); err != nil {
 				log.Println("dial error:", err)
 				panic(err)

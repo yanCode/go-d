@@ -103,7 +103,6 @@ func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
 		}
 	}
 	rpc := Rpc{}
-	//buf := make([]byte, 2000)
 	for {
 
 		if err := t.Decoder.Decode(conn, &rpc); err != nil {
