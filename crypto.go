@@ -3,6 +3,9 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/md5"
+	"crypto/rand"
+	"encoding/hex"
 	"io"
 )
 
@@ -31,7 +34,7 @@ func copyStream(stream cipher.Stream, blockSize int, src io.Reader, dst io.Write
 	return 0, nil
 }
 
-func copyEncrypt(key []byte, dst io.Writer, src io.Reader) (int, error) {
+func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return 0, err
@@ -40,6 +43,21 @@ func copyEncrypt(key []byte, dst io.Writer, src io.Reader) (int, error) {
 	if _, err := src.Read(iv); err != nil {
 		return 0, err
 	}
+	stream := cipher.NewCTR(block, iv)
+	return copyStream(stream, block.BlockSize(), src, dst)
+}
 
-	return 0, nil
+func newEncryptionKey() []byte {
+	keyBuf := make([]byte, 32)
+	io.ReadFull(rand.Reader, keyBuf)
+	return keyBuf
+}
+func generateId() string {
+	buf := make([]byte, 32)
+	io.ReadFull(rand.Reader, buf)
+	return hex.EncodeToString(buf)
+}
+func hashkey(key string) string {
+	hash := md5.Sum([]byte(key))
+	return hex.EncodeToString(hash[:])
 }
