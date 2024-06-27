@@ -8,19 +8,24 @@ import (
 )
 
 type TCPPeer struct {
-	conn net.Conn
+	Conn net.Conn
 	//if we dial and retrieve a connection, then outbound is true
 	//if we accept and retrieve a connection, then outbound is false
 	outbound bool
 }
 
-func (t *TCPPeer) Close() error {
-	return t.conn.Close()
-}
+//func (t *TCPPeer) Send(b []byte) error {
+//	_, err := t.Conn.Write(b)
+//	return err
+//}
+//
+//func (t *TCPPeer) Close() error {
+//	return t.Conn.Close()
+//}
 
 func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
 	return &TCPPeer{
-		conn:     conn,
+		Conn:     conn,
 		outbound: outbound,
 	}
 }
@@ -83,24 +88,24 @@ func (t *TCPTransport) Dial(addr string) error {
 }
 
 func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
-	var err error
+	//var err error
 	defer func() {
 		fmt.Printf("closing connection: %v\n", conn)
 		conn.Close()
 	}()
 	peer := NewTCPPeer(conn, isOutbound)
 	fmt.Printf("new peer: %v\n", peer)
-	if err := t.HandshakeFunc(peer); err != nil {
-		conn.Close()
-		fmt.Printf("TCP handshake error: %v\n", err)
-		return
-	}
+	//if err := t.HandshakeFunc(peer); err != nil {
+	//	conn.Close()
+	//	fmt.Printf("TCP handshake error: %v\n", err)
+	//	return
+	//}
 	if t.OnPeer != nil {
-		if err = t.OnPeer(peer); err != nil {
-			conn.Close()
-			fmt.Printf("OnPeer error: %v\n", err)
-			return
-		}
+		//if err = t.OnPeer(peer); err != nil {
+		//	conn.Close()
+		//	fmt.Printf("OnPeer error: %v\n", err)
+		//	return
+		//}
 	}
 	rpc := Rpc{}
 	for {
