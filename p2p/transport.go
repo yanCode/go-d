@@ -14,6 +14,7 @@ Transport is an interface that represents the communication between the nodes in
 it can be many forms, like (TCP, UDP, websockets, ...).
 */
 type Transport interface {
+	Addr() string
 	Dial(string) error
 	ListenAndAccept() error
 	Consume() <-chan Rpc

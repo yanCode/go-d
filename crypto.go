@@ -31,7 +31,7 @@ func copyStream(stream cipher.Stream, blockSize int, src io.Reader, dst io.Write
 			return 0, err
 		}
 	}
-	return 0, nil
+	return totalLen, nil
 }
 
 func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
@@ -57,9 +57,9 @@ func newEncryptionKey() []byte {
 	return keyBuf
 }
 func generateId() string {
-	buf := make([]byte, 32)
-	io.ReadFull(rand.Reader, buf)
-	return hex.EncodeToString(buf)
+	buffer := make([]byte, 32)
+	io.ReadFull(rand.Reader, buffer)
+	return hex.EncodeToString(buffer)
 }
 func hashkey(key string) string {
 	hash := md5.Sum([]byte(key))
