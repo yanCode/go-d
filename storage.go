@@ -74,7 +74,7 @@ func NewStorage(opts StorageOpts) *Storage {
 	}
 	return &Storage{opts}
 }
-func (s *Storage) Read(id string, key string) (int64, error) {
+func (s *Storage) Read(id string, key string) (int64, io.Reader, error) {
 	return s.readStream(id, key)
 }
 

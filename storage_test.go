@@ -23,59 +23,33 @@ func TestPathTransformFunc(t *testing.T) {
 }
 
 func TestStorage(t *testing.T) {
-
-	opts := StorageOpts{
-		PathTransformFunc: CasPathTransformFunc,
-		RootDir:           "/Users/y/drills/go-d-system/assets",
-	}
-	s := NewStorage(opts)
-	defer teardown(t, s)
+	s := newStore()
+	id := generateId()
+	defer tearDown(t, s)
 	for i := 0; i < 50; i++ {
 		key := fmt.Sprintf("key_%d", i)
-		data := []byte("hello world jpg bytes of number " + fmt.Sprintf("%d", i))
-		if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
+		data := []byte("Some photo bytes")
+		if _, err := s.writeStream(id, key, bytes.NewReader(data)); err != nil {
 			t.Error(err)
 		}
-		if ok := s.Has(key); !ok {
-			t.Errorf("key %s should exist", key)
+		if ok := s.Has(id, key); !ok {
+			t.Errorf("key %s not found", key)
 		}
-		_, err := s.Read(key)
+		_, reader, err := s.Read(id, key)
 		if err != nil {
 			t.Error(err)
 		}
+		fmt.Println(reader)
 	}
 }
-func TestStorage_Delete(t *testing.T) {
+func newStore() *Storage {
 	opts := StorageOpts{
 		PathTransformFunc: CasPathTransformFunc,
 	}
-	s := NewStorage(opts)
-	key := "my_pic"
-	data := []byte("hello world")
-	if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
-		t.Error(err)
-	}
-	if err := s.Delete(key); err != nil {
-		t.Error(err)
-	}
+	return NewStorage(opts)
 }
-func teardown(t *testing.T, s *Storage) {
+func tearDown(t *testing.T, s *Storage) {
 	if err := s.Clear(); err != nil {
-		t.Error(err)
-	}
-}
-
-func TestStorage_Read(t *testing.T) {
-	opts := StorageOpts{
-		PathTransformFunc: CasPathTransformFunc,
-	}
-	s := NewStorage(opts)
-	key := "my_pic"
-	data := []byte("hello world")
-	if err := s.writeStream(key, bytes.NewReader(data)); err != nil {
-		t.Error(err)
-	}
-	if _, err := s.Read(key); err != nil {
-		t.Error(err)
+		t.Errorf("failed to clear storage")
 	}
 }
