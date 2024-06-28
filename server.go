@@ -101,22 +101,24 @@ func (s *FileServer) Stop() {
 	fmt.Printf("[%s] stopping fileserver...\n", "todo")
 }
 
-func (s *FileServer) Has(key string) bool {
-	return s.storage.Has(key)
-}
+//func (s *FileServer) Has(key string) bool {
+//	return s.storage.Has(key)
+//}
 
 type Message struct {
 	Payload any
 }
-type messageStoreFile struct {
+type MessageStoreFile struct {
 	ID   string
 	Key  string
 	Size int64
 }
+type MessageGetFile struct {
+	ID  string
+	Key string
+}
 
-//func (s *FileServer) Get(key string) (io.Reader, error) {
-//	if s.storage.Has(s.ID, key) {
-//
-//	}
-//
-//}
+func init() {
+	gob.Register(MessageStoreFile{})
+	gob.Register(MessageGetFile{})
+}
