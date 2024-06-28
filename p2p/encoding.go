@@ -19,12 +19,21 @@ func (dec GobDecoder) Decode(reader io.Reader, msg *Rpc) error {
 }
 
 func (noop DefaultDecoder) Decode(reader io.Reader, msg *Rpc) error {
-	//buf := new(bytes.Buffer)
-	buf := make([]byte, 1028)
-	n, err := reader.Read(buf)
+	peekBuffer := make([]byte, 1)
+	if _, err := reader.Read(peekBuffer); err != nil {
+		return nil
+	}
+	stream := peekBuffer[0] == IncomingStream
+	if stream {
+		msg.Stream = true
+		return nil
+	}
+
+	buffer := make([]byte, 1028)
+	n, err := reader.Read(buffer)
 	if err != nil {
 		return err
 	}
-	msg.Payload = buf[:n]
+	msg.Payload = buffer[:n]
 	return nil
 }

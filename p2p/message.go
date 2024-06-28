@@ -1,8 +1,12 @@
 package p2p
 
-import "net"
+const (
+	IncomingStream = 0x1
+	OutgoingStream = 0x2
+)
 
 type Rpc struct {
-	From    net.Addr
+	From    string
 	Payload []byte
+	Stream  bool
 }
