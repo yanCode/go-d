@@ -5,7 +5,7 @@ package p2p
 Peer is an interface that represents any remote node in the network.
 */
 type Peer interface {
-	Close() error
+	Send([]byte) error
 }
 
 /*

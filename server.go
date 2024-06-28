@@ -6,6 +6,11 @@ import (
 	"log"
 )
 
+type Payload struct {
+	Key  string
+	data []byte
+}
+
 type FileServer struct {
 	FileServerOptions `json:"file_server_options"`
 	storage           *Storage      `json:"storage,omitempty"`

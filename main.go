@@ -7,7 +7,7 @@ import (
 )
 
 func OnPeer(peer p2p.Peer) error {
-	peer.Close()
+	//peer.Close()
 	fmt.Println("got peer, doing some logic with peer outside of TCPTransport: ", peer)
 	return nil
 }
@@ -32,10 +32,10 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 
 func main() {
 
-	s1 := makeServer(":3000", "")
-	go func() {
-		log.Fatal(s1.Start())
-	}()
-	s2 := makeServer(":4000", ":3000")
-	log.Fatal(s2.Start())
+	s1 := makeServer(":3000", ":3000")
+	//go func() {
+	log.Fatal(s1.Start())
+	//}()
+	//s2 := makeServer(":4000", ":3000")
+	//log.Fatal(s2.Start())
 }
