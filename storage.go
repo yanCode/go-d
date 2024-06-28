@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
@@ -76,60 +74,60 @@ func NewStorage(opts StorageOpts) *Storage {
 	}
 	return &Storage{opts}
 }
-func (s *Storage) Read(key string) (io.Reader, error) {
-	file, err := s.readStream(key)
+func (s *Storage) Read(id string, key string) (int64, error) {
+	return s.readStream(id, key)
+}
+
+func (s *Storage) Delete(id string, key string) error {
+	pathKey := s.PathTransformFunc(key)
+	defer func() {
+		log.Printf("deleted [%s] from disk", pathKey.FileName)
+	}()
+	firstPathNameWithRoot := fmt.Sprintf("%s/%s/%s", s.RootDir, id, pathKey.FirstPathName())
+	return os.RemoveAll(firstPathNameWithRoot)
+}
+
+func (s *Storage) readStream(id string, key string) (int64, io.ReadCloser, error) {
+	pathKey := s.PathTransformFunc(key)
+	fullPathWithRoot := fmt.Sprintf("%s/%s/%s", s.RootDir, id, pathKey.FullPath())
+	file, err := os.Open(fullPathWithRoot)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
-	buffer := new(bytes.Buffer)
-	_, err = io.Copy(buffer, file)
-	return buffer, err
-
+	file_info, err := file.Stat()
+	if err != nil {
+		return 0, nil, err
+	}
+	return file_info.Size(), file, nil
 }
 
-func (s *Storage) Delete(key string) error {
+func (s *Storage) Has(id string, key string) bool {
 	pathKey := s.PathTransformFunc(key)
-	return os.RemoveAll(pathKey.PathName)
-}
-
-func (s *Storage) readStream(key string) (*os.File, error) {
-	pathKey := s.PathTransformFunc(key)
-	return os.Open(filepath.Join(s.RootDir, pathKey.PathName))
-}
-
-func (s *Storage) Has(key string) bool {
-	pathKey := s.PathTransformFunc(key)
-	fullPathWithRoot := filepath.Join(s.RootDir, pathKey.PathName)
+	fullPathWithRoot := filepath.Join(s.RootDir, id, pathKey.FullPath())
 	_, err := os.Stat(fullPathWithRoot)
 	return !errors.Is(err, os.ErrNotExist)
 }
 
+func (s *Storage) openFileForWriting(id string, key string) (*os.File, error) {
+	pathkey := s.PathTransformFunc(key)
+	pathNameWithRoot := filepath.Join(s.RootDir, id, pathkey.FirstPathName())
+	if err := os.MkdirAll(pathNameWithRoot, os.ModePerm); err != nil {
+		return nil, err
+	}
+	fullPathWithRoot := fmt.Sprintf("%s/%s/%s", s.RootDir, id, pathkey.FullPath())
+	return os.Create(filepath.Join(fullPathWithRoot))
+}
+
 // writeFileStream writes data from an io.Reader to a file identified by the key.
 
-func (s *Storage) writeStream(key string, reader io.Reader) error {
-	pathName := s.PathTransformFunc(key)
-	pathNameWithRoot := filepath.Join(s.RootDir, pathName.PathName)
-	if err := os.MkdirAll(pathNameWithRoot, os.ModePerm); err != nil {
-		return err
-	}
-	buf := new(bytes.Buffer)
-	_, err := io.Copy(buf, reader)
+func (s *Storage) writeStream(id string, key string, reader io.Reader) (int64, error) {
+	file, err := s.openFileForWriting(id, key)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	filenameBytes := md5.Sum(buf.Bytes())
-	filename := hex.EncodeToString(filenameBytes[:])
-	file, err := os.Create(filepath.Join(pathNameWithRoot, filename))
+	defer file.Close()
+	return io.Copy(file, reader)
 
-	if err != nil {
-		return err
-	}
-	result, err := io.Copy(file, buf)
-	if err != nil {
-		return err
-	}
-	log.Printf("copied %d bytes to disk: %s \n", result, pathName)
-	return nil
 }
 
 func (s *Storage) Clear() error {

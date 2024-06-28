@@ -1,22 +1,25 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"github/yanCode/go-d/p2p"
 	"log"
+	"sync"
 )
 
-type Payload struct {
-	Key  string
-	data []byte
+type FileServer struct {
+	FileServerOptions
+	peerLock sync.Mutex
+	peers    map[string]p2p.Peer
+	storage  *Storage
+	quitCh   chan struct{}
 }
 
-type FileServer struct {
-	FileServerOptions `json:"file_server_options"`
-	storage           *Storage      `json:"storage,omitempty"`
-	quitCh            chan struct{} `json:"quitCh,omitempty"`
-}
 type FileServerOptions struct {
+	ID                string
+	EncKey            []byte
 	StorageRoot       string
 	PathTransformFunc PathTransformFunc
 	Transport         p2p.TCPTransport
@@ -28,12 +31,30 @@ func NewFileServer(opts FileServerOptions) *FileServer {
 		RootDir:           opts.StorageRoot,
 		PathTransformFunc: opts.PathTransformFunc,
 	}
+	if len(opts.ID) == 0 {
+		opts.ID = generateId()
+	}
 	return &FileServer{
 		FileServerOptions: opts,
 		storage:           NewStorage(storeOpts),
 		quitCh:            make(chan struct{}),
 	}
 }
+func (s *FileServer) broadcast(message *Message) error {
+	buffer := new(bytes.Buffer)
+	if err := gob.NewEncoder(buffer).Encode(message); err != nil {
+		panic(err)
+	}
+	for _, peer := range s.peers {
+		peer.Send([]byte{p2p.IncomingStream})
+		if err := peer.Send(buffer.Bytes()); err != nil {
+			return err
+		}
+	}
+	return nil
+
+}
+
 func (s *FileServer) bootstrapNetwork() error {
 	for _, addr := range s.BootstrapNodes {
 		go func(addr string) {
@@ -83,3 +104,19 @@ func (s *FileServer) Stop() {
 func (s *FileServer) Has(key string) bool {
 	return s.storage.Has(key)
 }
+
+type Message struct {
+	Payload any
+}
+type messageStoreFile struct {
+	ID   string
+	Key  string
+	Size int64
+}
+
+//func (s *FileServer) Get(key string) (io.Reader, error) {
+//	if s.storage.Has(s.ID, key) {
+//
+//	}
+//
+//}
