@@ -110,7 +110,7 @@ func (s *Storage) Has(id string, key string) bool {
 
 func (s *Storage) openFileForWriting(id string, key string) (*os.File, error) {
 	pathkey := s.PathTransformFunc(key)
-	pathNameWithRoot := filepath.Join(s.RootDir, id, pathkey.FirstPathName())
+	pathNameWithRoot := filepath.Join(s.RootDir, id, pathkey.PathName)
 	if err := os.MkdirAll(pathNameWithRoot, os.ModePerm); err != nil {
 		return nil, err
 	}
