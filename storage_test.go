@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"testing"
 )
 
@@ -39,7 +40,16 @@ func TestStorage(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		fmt.Println(reader)
+		buffer, _ := ioutil.ReadAll(reader)
+		if string(buffer) != string(data) {
+			t.Errorf("wanted %s, got %s", string(data), string(buffer))
+		}
+		if err := s.Delete(id, key); err != nil {
+			t.Error(err)
+		}
+		if ok := s.Has(id, key); ok {
+			t.Errorf("key %s not deleted", key)
+		}
 	}
 }
 func newStore() *Storage {
