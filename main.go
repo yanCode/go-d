@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github/yanCode/go-d/p2p"
 	"log"
@@ -33,13 +34,24 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 
 func main() {
 	s1 := makeServer(":8001", "")
-	s2 := makeServer(":8007", "")
-	s3 := makeServer("8005", ":8001", ":8007")
+	s2 := makeServer(":8002", "")
+	s3 := makeServer("8003", ":8001", ":8002")
 	go func() { log.Fatal(s1.Start()) }()
 	time.Sleep(500 * time.Millisecond)
 	go func() { log.Fatal(s2.Start()) }()
 	time.Sleep(2 * time.Second)
-	s3.Start()
+	go s3.Start()
 	time.Sleep(2 * time.Second)
-	select {}
+	for i := 0; i < 5; i++ {
+		key := fmt.Sprintf("picture_%d.png", i)
+		data := bytes.NewReader([]byte("my big data file here!"))
+		s3.Store(key, data)
+		if err := s3.storage.Delete(s3.ID, key); err != nil {
+			log.Fatal(err)
+		}
+		//r, err := s3.Get(key)
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+	}
 }

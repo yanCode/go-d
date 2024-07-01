@@ -5,8 +5,10 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github/yanCode/go-d/p2p"
+	"io"
 	"log"
 	"sync"
+	"time"
 )
 
 type FileServer struct {
@@ -58,7 +60,7 @@ func (s *FileServer) broadcast(message *Message) error {
 func (s *FileServer) bootstrapNetwork() error {
 	for _, addr := range s.BootstrapNodes {
 		go func(addr string) {
-			fmt.Println("attempting to connect to  with remote: {}", addr)
+			fmt.Printf("[%s] attempting to connect to  with remote: %s\n", s.Transport.Addr(), addr)
 			if err := s.Transport.Dial(addr); err != nil {
 				log.Println("dial error:", err)
 				panic(err)
@@ -121,4 +123,35 @@ type MessageGetFile struct {
 func init() {
 	gob.Register(MessageStoreFile{})
 	gob.Register(MessageGetFile{})
+}
+
+func (s *FileServer) Store(key string, reader io.Reader) error {
+	var (
+		fileBuffer = new(bytes.Buffer)
+		tee        = io.TeeReader(reader, fileBuffer)
+	)
+	size, err := s.storage.Write(s.ID, key, tee)
+	if err != nil {
+		return err
+	}
+	msg := Message{
+		Payload: MessageStoreFile{
+			ID:   s.ID,
+			Key:  hashkey(key),
+			Size: size + 16,
+		},
+	}
+	if err := s.broadcast(&msg); err != nil {
+		return err
+	}
+	time.Sleep(time.Millisecond * 5)
+	peers := []io.Writer{}
+	for _, peer := range s.peers {
+		peers = append(peers, peer)
+	}
+	mw := io.MultiWriter(peers...)
+	mw.Write([]byte{p2p.IncomingStream})
+	n, err := copyEncrypt(s.EncKey, fileBuffer, mw)
+	fmt.Printf("[%s] received and written (%d) bytes to disk\n", s.Transport.Addr(), n)
+	return nil
 }

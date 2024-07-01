@@ -129,6 +129,9 @@ func (s *Storage) writeStream(id string, key string, reader io.Reader) (int64, e
 	return io.Copy(file, reader)
 
 }
+func (s *Storage) Write(id string, key string, reader io.Reader) (int64, error) {
+	return s.writeStream(id, key, reader)
+}
 
 func (s *Storage) Clear() error {
 	return os.RemoveAll(s.RootDir)

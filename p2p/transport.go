@@ -1,11 +1,15 @@
 package p2p
 
+import "net"
+
 /*
 *
 Peer is an interface that represents any remote node in the network.
 */
 type Peer interface {
+	net.Conn
 	Send([]byte) error
+	CloseStream()
 }
 
 /*
