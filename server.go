@@ -103,9 +103,13 @@ func (s *FileServer) Stop() {
 	fmt.Printf("[%s] stopping fileserver...\n", "todo")
 }
 
-//func (s *FileServer) Has(key string) bool {
-//	return s.storage.Has(key)
-//}
+func (s *FileServer) OnPeer(peer p2p.Peer) error {
+	s.peerLock.Lock()
+	defer s.peerLock.Unlock()
+	s.peers[peer.RemoteAddr().String()] = peer
+	log.Printf("connected with remote %s", peer.RemoteAddr())
+	return nil
+}
 
 type Message struct {
 	Payload any

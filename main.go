@@ -8,12 +8,6 @@ import (
 	"time"
 )
 
-func OnPeer(peer p2p.Peer) error {
-	//peer.Close()
-	fmt.Println("got peer, doing some logic with peer outside of TCPTransport: ", peer)
-	return nil
-}
-
 func makeServer(listenAddr string, nodes ...string) *FileServer {
 	tpcTransportOptions := p2p.TCPTransportOptions{
 		ListenAddr:    listenAddr,
@@ -29,7 +23,9 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 		Transport:         *tcpTransport,
 		BootstrapNodes:    nodes,
 	}
-	return NewFileServer(fileServerOptions)
+	s := NewFileServer(fileServerOptions)
+	tcpTransport.OnPeer = s.OnPeer
+	return s
 }
 
 func main() {
