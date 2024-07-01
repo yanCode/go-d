@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github/yanCode/go-d/p2p"
 	"log"
+	"time"
 )
 
 func OnPeer(peer p2p.Peer) error {
@@ -17,11 +18,11 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 		ListenAddr:    listenAddr,
 		HandshakeFunc: p2p.NopHandshakeFunc,
 		Decoder:       p2p.DefaultDecoder{},
-		OnPeer:        OnPeer, //todo
 	}
 	tcpTransport := p2p.NewTCPTransport(tpcTransportOptions)
 
 	fileServerOptions := FileServerOptions{
+		EncKey:            newEncryptionKey(),
 		StorageRoot:       "/Users/y/drills/go-d-system/" + listenAddr + "_3000",
 		PathTransformFunc: CasPathTransformFunc,
 		Transport:         *tcpTransport,
@@ -31,11 +32,14 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 }
 
 func main() {
-
-	s1 := makeServer(":3000", ":3000")
-	//go func() {
-	log.Fatal(s1.Start())
-	//}()
-	//s2 := makeServer(":4000", ":3000")
-	//log.Fatal(s2.Start())
+	s1 := makeServer(":8001", "")
+	s2 := makeServer(":8007", "")
+	s3 := makeServer("8005", ":8001", ":8007")
+	go func() { log.Fatal(s1.Start()) }()
+	time.Sleep(500 * time.Millisecond)
+	go func() { log.Fatal(s2.Start()) }()
+	time.Sleep(2 * time.Second)
+	s3.Start()
+	time.Sleep(2 * time.Second)
+	select {}
 }

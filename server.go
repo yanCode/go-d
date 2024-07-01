@@ -58,7 +58,7 @@ func (s *FileServer) broadcast(message *Message) error {
 func (s *FileServer) bootstrapNetwork() error {
 	for _, addr := range s.BootstrapNodes {
 		go func(addr string) {
-			fmt.Println("attempting to connect to  with remote: ", addr)
+			fmt.Println("attempting to connect to  with remote: {}", addr)
 			if err := s.Transport.Dial(addr); err != nil {
 				log.Println("dial error:", err)
 				panic(err)
@@ -70,7 +70,7 @@ func (s *FileServer) bootstrapNetwork() error {
 }
 
 func (s *FileServer) Start() error {
-	fmt.Printf("[%s] starting fileserver...\n", "todo")
+	fmt.Printf("[%s] starting fileserver...\n", s.Transport.Addr())
 	if err := s.Transport.ListenAddAccept(); err != nil {
 		return err
 	}

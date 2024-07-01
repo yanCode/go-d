@@ -56,7 +56,7 @@ func NewTCPTransport(opts TCPTransportOptions) *TCPTransport {
 	}
 }
 
-func (t *TCPTransport) Add() string {
+func (t *TCPTransport) Addr() string {
 	return t.ListenAddr
 }
 
