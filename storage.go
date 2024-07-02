@@ -117,6 +117,14 @@ func (s *Storage) openFileForWriting(id string, key string) (*os.File, error) {
 	fullPathWithRoot := fmt.Sprintf("%s/%s/%s", s.RootDir, id, pathkey.FullPath())
 	return os.Create(filepath.Join(fullPathWithRoot))
 }
+func (s *Storage) WriteDecrypt(encKey []byte, id string, key string, r io.Reader) (int64, error) {
+	f, err := s.openFileForWriting(id, key)
+	if err != nil {
+		return 0, err
+	}
+	n, err := copyDecrypt(encKey, r, f)
+	return int64(n), err
+}
 
 // writeFileStream writes data from an io.Reader to a file identified by the key.
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	"github/yanCode/go-d/p2p"
@@ -101,6 +102,34 @@ func (s *FileServer) loop() {
 func (s *FileServer) Stop() {
 	close(s.quitCh)
 	fmt.Printf("[%s] stopping fileserver...\n", "todo")
+}
+func (s *FileServer) Get(key string) (io.Reader, error) {
+	if s.storage.Has(s.ID, key) {
+		fmt.Printf("[%s] serving file (%s) from local disk\n", s.Transport.Addr(), key)
+		_, r, err := s.storage.Read(s.ID, key)
+		return r, err
+	}
+	fmt.Printf("[%s] serving file (%s) from network\n", s.Transport.Addr(), key)
+	msg := Message{Payload: MessageGetFile{
+		ID:  s.ID,
+		Key: hashkey(key),
+	}}
+	if err := s.broadcast(&msg); err != nil {
+		return nil, err
+	}
+	time.Sleep(time.Millisecond * 500)
+	for _, peer := range s.peers {
+		var fileSize int64
+		binary.Read(peer, binary.LittleEndian, &fileSize)
+		n, err := s.storage.WriteDecrypt(s.EncKey, s.ID, key, io.LimitReader(peer, fileSize))
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("[%s] received (%d) bytes over the network from (%s)", s.Transport.Addr(), n, peer.RemoteAddr())
+
+		peer.CloseStream()
+	}
+	return nil, nil
 }
 
 func (s *FileServer) OnPeer(peer p2p.Peer) error {
