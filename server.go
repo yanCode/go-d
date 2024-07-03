@@ -120,7 +120,10 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 	time.Sleep(time.Millisecond * 500)
 	for _, peer := range s.peers {
 		var fileSize int64
-		binary.Read(peer, binary.LittleEndian, &fileSize)
+		err := binary.Read(peer, binary.LittleEndian, &fileSize)
+		if err != nil {
+			return nil, err
+		}
 		n, err := s.storage.WriteDecrypt(s.EncKey, s.ID, key, io.LimitReader(peer, fileSize))
 		if err != nil {
 			return nil, err
@@ -129,7 +132,9 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 
 		peer.CloseStream()
 	}
-	return nil, nil
+
+	_, r, err := s.storage.Read(s.ID, key)
+	return r, err
 }
 
 func (s *FileServer) OnPeer(peer p2p.Peer) error {
