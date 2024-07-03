@@ -50,7 +50,10 @@ func (s *FileServer) broadcast(message *Message) error {
 		panic(err)
 	}
 	for _, peer := range s.peers {
-		peer.Send([]byte{p2p.IncomingStream})
+		err := peer.Send([]byte{p2p.IncomingStream})
+		if err != nil {
+			return err
+		}
 		if err := peer.Send(buffer.Bytes()); err != nil {
 			return err
 		}
@@ -88,7 +91,10 @@ func (s *FileServer) Start() error {
 }
 func (s *FileServer) loop() {
 	defer func() {
-		s.Transport.Close()
+		err := s.Transport.Close()
+		if err != nil {
+			return
+		}
 		log.Println("file server stopped for user's quit action..")
 	}()
 	for {
@@ -102,7 +108,7 @@ func (s *FileServer) loop() {
 }
 func (s *FileServer) Stop() {
 	close(s.quitCh)
-	fmt.Printf("[%s] stopping fileserver...\n", "todo")
+	fmt.Printf("[%s] stopping fileserver...\n", s.Transport.Addr())
 }
 func (s *FileServer) Get(key string) (io.Reader, error) {
 	if s.storage.Has(s.ID, key) {
@@ -113,7 +119,7 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 	fmt.Printf("[%s] serving file (%s) from network\n", s.Transport.Addr(), key)
 	msg := Message{Payload: MessageGetFile{
 		ID:  s.ID,
-		Key: hashkey(key),
+		Key: hashKey(key),
 	}}
 	if err := s.broadcast(&msg); err != nil {
 		return nil, err
@@ -176,7 +182,7 @@ func (s *FileServer) Store(key string, reader io.Reader) error {
 	msg := Message{
 		Payload: MessageStoreFile{
 			ID:   s.ID,
-			Key:  hashkey(key),
+			Key:  hashKey(key),
 			Size: size + 16,
 		},
 	}
@@ -189,7 +195,10 @@ func (s *FileServer) Store(key string, reader io.Reader) error {
 		peers = append(peers, peer)
 	}
 	mw := io.MultiWriter(peers...)
-	mw.Write([]byte{p2p.IncomingStream})
+	_, err = mw.Write([]byte{p2p.IncomingStream})
+	if err != nil {
+		return err
+	}
 	n, err := copyEncrypt(s.EncKey, fileBuffer, mw)
 	fmt.Printf("[%s] received and written (%d) bytes to disk\n", s.Transport.Addr(), n)
 	return nil

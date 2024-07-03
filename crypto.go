@@ -41,10 +41,7 @@ func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 	}
 	iv := make([]byte, block.BlockSize())
 
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return 0, err
-	}
-	if _, err := dst.Write(iv); err != nil {
+	if _, err := src.Read(iv); err != nil {
 		return 0, err
 	}
 	stream := cipher.NewCTR(block, iv)
@@ -53,15 +50,21 @@ func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 
 func newEncryptionKey() []byte {
 	keyBuf := make([]byte, 32)
-	io.ReadFull(rand.Reader, keyBuf)
+	_, err := io.ReadFull(rand.Reader, keyBuf)
+	if err != nil {
+		return nil
+	}
 	return keyBuf
 }
 func generateId() string {
 	buffer := make([]byte, 32)
-	io.ReadFull(rand.Reader, buffer)
+	_, err := io.ReadFull(rand.Reader, buffer)
+	if err != nil {
+		return ""
+	}
 	return hex.EncodeToString(buffer)
 }
-func hashkey(key string) string {
+func hashKey(key string) string {
 	hash := md5.Sum([]byte(key))
 	return hex.EncodeToString(hash[:])
 }
