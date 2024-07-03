@@ -41,6 +41,7 @@ func NewFileServer(opts FileServerOptions) *FileServer {
 		FileServerOptions: opts,
 		storage:           NewStorage(storeOpts),
 		quitCh:            make(chan struct{}),
+		peers:             make(map[string]p2p.Peer),
 	}
 }
 func (s *FileServer) broadcast(message *Message) error {

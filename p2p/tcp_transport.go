@@ -31,8 +31,9 @@ func (t *TcpPeer) Close() error {
 
 func NewTcpPeer(conn net.Conn, outbound bool) *TcpPeer {
 	return &TcpPeer{
-		Conn:     conn,
-		outbound: outbound,
+		Conn:      conn,
+		outbound:  outbound,
+		waitGroup: &sync.WaitGroup{},
 	}
 }
 

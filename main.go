@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github/yanCode/go-d/p2p"
-	"io/ioutil"
+	"io"
 	"log"
 	"time"
 )
@@ -56,7 +56,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		b, err := ioutil.ReadAll(r)
+		b, err := io.ReadAll(r)
 		if err != nil {
 			log.Fatal(err)
 		}
