@@ -25,7 +25,7 @@ type FileServerOptions struct {
 	EncKey            []byte
 	StorageRoot       string
 	PathTransformFunc PathTransformFunc
-	Transport         p2p.TCPTransport
+	Transport         *p2p.TCPTransport
 	BootstrapNodes    []string
 }
 

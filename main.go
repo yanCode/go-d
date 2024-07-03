@@ -21,7 +21,7 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 		EncKey:            newEncryptionKey(),
 		StorageRoot:       "/Users/y/drills/go-d-system/" + listenAddr + "_3000",
 		PathTransformFunc: CasPathTransformFunc,
-		Transport:         *tcpTransport,
+		Transport:         tcpTransport,
 		BootstrapNodes:    nodes,
 	}
 	s := NewFileServer(fileServerOptions)
@@ -45,7 +45,10 @@ func main() {
 	for i := 0; i < 1; i++ {
 		key := fmt.Sprintf("picture_%d.png", i)
 		data := bytes.NewReader([]byte("my big data file here!"))
-		s3.Store(key, data)
+		err := s3.Store(key, data)
+		if err != nil {
+			log.Fatal(err)
+		}
 		if err := s3.storage.Delete(s3.ID, key); err != nil {
 			log.Fatal(err)
 		}
