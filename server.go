@@ -100,8 +100,15 @@ func (s *FileServer) loop() {
 	}()
 	for {
 		select {
-		case msg := <-s.Transport.Consume():
-			fmt.Println(msg)
+		case rpc := <-s.Transport.Consume():
+			var message Message
+			if err := gob.NewDecoder(bytes.NewReader(rpc.Payload)).Decode(&message); err != nil {
+				log.Println("decoding error: ", err)
+			}
+			if err := s.handleMessage(rpc.From, &message); err != nil {
+				log.Println("handle message error: ", err)
+			}
+
 		case <-s.quitCh:
 			return
 		}
@@ -202,5 +209,34 @@ func (s *FileServer) Store(key string, reader io.Reader) error {
 	}
 	n, err := copyEncrypt(s.EncKey, fileBuffer, mw)
 	fmt.Printf("[%s] received and written (%d) bytes to disk\n", s.Transport.Addr(), n)
+	return nil
+}
+func (s *FileServer) handleMessage(from string, msg *Message) error {
+	switch v := msg.Payload.(type) {
+	case MessageStoreFile:
+		return s.handleMessageStoreFile(from, v)
+	case MessageGetFile:
+		return s.handleMessageGetFile(from, v)
+	}
+	return nil
+}
+func (s *FileServer) handleMessageGetFile(from string, message MessageGetFile) error {
+	//write panic to indicate this function is not implemented.
+	panic("not implemented")
+	return nil
+
+}
+
+func (s *FileServer) handleMessageStoreFile(from string, message MessageStoreFile) error {
+	peer, ok := s.peers[from]
+	if !ok {
+		return fmt.Errorf("peer (%s) could not be found in the peer list", from)
+	}
+	n, err := s.storage.Write(message.ID, message.Key, io.LimitReader(peer, message.Size))
+	if err != nil {
+		return err
+	}
+	fmt.Printf("[%s] received (%d) bytes over the network from (%s)", s.Transport.Addr(), n, peer.RemoteAddr())
+	peer.CloseStream()
 	return nil
 }
