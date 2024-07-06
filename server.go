@@ -221,8 +221,31 @@ func (s *FileServer) handleMessage(from string, msg *Message) error {
 	return nil
 }
 func (s *FileServer) handleMessageGetFile(from string, message MessageGetFile) error {
-	//write panic to indicate this function is not implemented.
-	panic("not implemented")
+	if !s.storage.Has(message.ID, message.Key) {
+		return fmt.Errorf("[%s] need to serve file (%s) but it does not exist on disk", s.Transport.Addr(), message.Key)
+	}
+	fmt.Printf("[%s] serving file (%s) over the network\n", s.Transport.Addr(), message.Key)
+	fileSize, r, err := s.storage.Read(message.ID, message.Key)
+	if err != nil {
+		return err
+	}
+	if rc, ok := r.(io.ReadCloser); ok {
+		fmt.Println("closing readCloser")
+		defer rc.Close()
+	}
+	peer, ok := s.peers[from]
+	if !ok {
+		return fmt.Errorf("peer (%s) could not be found in the peer list", from)
+	}
+	peer.Send([]byte{p2p.IncomingStream})
+	binary.Write(peer, binary.LittleEndian, fileSize)
+	n, err := io.Copy(peer, r)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("[%s] written (%d) bytes over the network to %s\n", s.Transport.Addr(), n, from)
+
 	return nil
 
 }
