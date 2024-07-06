@@ -50,7 +50,8 @@ func (s *FileServer) broadcast(message *Message) error {
 		panic(err)
 	}
 	for _, peer := range s.peers {
-		err := peer.Send([]byte{p2p.IncomingStream})
+		//err := peer.Send([]byte{p2p.IncomingStream})
+		err := peer.Send([]byte{p2p.IncomingMessage})
 		if err != nil {
 			return err
 		}

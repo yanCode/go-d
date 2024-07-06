@@ -1,8 +1,8 @@
 package p2p
 
 const (
-	IncomingStream = 0x1
-	OutgoingStream = 0x2
+	IncomingMessage = 0x1
+	IncomingStream  = 0x2
 )
 
 type Rpc struct {
