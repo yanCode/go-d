@@ -117,9 +117,9 @@ func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
 			return
 		}
 	}
-	rpc := Rpc{}
-	for {
 
+	for {
+		rpc := Rpc{}
 		if err := t.Decoder.Decode(conn, &rpc); err != nil {
 			fmt.Printf("TCP error reading message: %v\n", err)
 			return
