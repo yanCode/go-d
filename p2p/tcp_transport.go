@@ -91,7 +91,7 @@ func (t *TCPTransport) startAcceptLoop() {
 func (t *TCPTransport) Dial(address string) error {
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
-		return nil
+		return err
 	}
 	go t.handleConn(conn, true)
 	return nil
