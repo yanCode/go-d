@@ -93,7 +93,7 @@ func (t *TCPTransport) Dial(address string) error {
 	if err != nil {
 		return nil
 	}
-	go t.handleConn(conn, false)
+	go t.handleConn(conn, true)
 	return nil
 }
 
