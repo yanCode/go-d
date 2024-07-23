@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github/yanCode/go-d/p2p"
-	"io"
+	"github/yanCode/go-d/utils"
 	"log"
 	"time"
 )
@@ -19,7 +19,7 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 
 	fileServerOptions := FileServerOptions{
 		EncKey:            newEncryptionKey(),
-		StorageRoot:       "/Users/y/drills/go-d-system/" + listenAddr[1:],
+		StorageRoot:       "/Users/y/drills/go-d-system/" + listenAddr[1:] + "_network",
 		PathTransformFunc: CasPathTransformFunc,
 		Transport:         tcpTransport,
 		BootstrapNodes:    nodes,
@@ -30,37 +30,38 @@ func makeServer(listenAddr string, nodes ...string) *FileServer {
 }
 
 func main() {
-	s1 := makeServer(":8001", "")
-	s2 := makeServer(":8002", "")
-	s3 := makeServer(":8003", ":8001", ":8002")
+	utils.Logger.Println("start to mimic  2 file servers ....")
+	s1 := makeServer(":3000", "")
+	//s2 := makeServer(":8002", "")
+	s3 := makeServer(":4000", ":3000")
 	go func() { log.Fatal(s1.Start()) }()
 	time.Sleep(500 * time.Millisecond)
-	go func() { log.Fatal(s2.Start()) }()
+	//go func() { log.Fatal(s2.Start()) }()
 	time.Sleep(2 * time.Second)
 	go func() {
 		log.Fatal(s3.Start())
 	}()
 	time.Sleep(2 * time.Second)
-
-	for i := 0; i < 1; i++ {
-		key := fmt.Sprintf("picture_%d.png", i)
-		data := bytes.NewReader([]byte("my big data file here!"))
-		err := s3.Store(key, data)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := s3.storage.Delete(s3.ID, key); err != nil {
-			log.Fatal(err)
-		}
-		r, err := s3.Get(key)
-		if err != nil {
-			log.Fatal(err)
-		}
-		b, err := io.ReadAll(r)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println(string(b))
+	//for i := 0; i < 1; i++ {
+	i := 1
+	key := fmt.Sprintf("picture_%d.png", i)
+	data := bytes.NewReader([]byte("my big data file here!"))
+	err := s3.Store(key, data)
+	if err != nil {
+		log.Fatal(err)
 	}
+	//if err := s3.storage.Delete(s3.ID, key); err != nil {
+	//	log.Fatal(err)
+	//}
+	//r, err := s3.Get(key)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//b, err := io.ReadAll(r)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+
+	//fmt.Println(string(b))
+	//}
 }

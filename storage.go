@@ -36,7 +36,7 @@ func CasPathTransformFunc(key string) PathKey {
 	hash := sha1.Sum([]byte(key))
 	hashStr := hex.EncodeToString(hash[:])
 
-	block_size := 5
+	block_size := 16
 	sliceLen := len(hashStr) / block_size
 	paths := make([]string, sliceLen)
 	for i := 0; i < sliceLen; i++ {
@@ -134,6 +134,12 @@ func (s *Storage) writeStream(id string, key string, reader io.Reader) (int64, e
 		return 0, err
 	}
 	defer file.Close()
+	fmt.Printf("file path: %s", file.Name())
+	writeString, err := file.WriteString("I am writing something....")
+	if err != nil {
+		return 0, err
+	}
+	fmt.Printf("wrote %d bytes\n", writeString)
 	return io.Copy(file, reader)
 
 }

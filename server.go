@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github/yanCode/go-d/p2p"
+	"github/yanCode/go-d/utils"
 	"io"
 	"log"
 	"sync"
@@ -49,10 +50,9 @@ func (s *FileServer) broadcast(message *Message) error {
 	if err := gob.NewEncoder(buffer).Encode(message); err != nil {
 		panic(err)
 	}
+	fmt.Printf("[%s] broadcast to all peers\n", s.Transport.Addr())
 	for _, peer := range s.peers {
-		//err := peer.Send([]byte{p2p.IncomingStream})
-		err := peer.Send([]byte{p2p.IncomingMessage})
-		if err != nil {
+		if err := peer.Send([]byte{p2p.IncomingMessage}); err != nil {
 			return err
 		}
 		if err := peer.Send(buffer.Bytes()); err != nil {
@@ -81,7 +81,8 @@ func (s *FileServer) bootstrapNetwork() error {
 }
 
 func (s *FileServer) Start() error {
-	fmt.Printf("[%s] starting fileserver...\n", s.Transport.Addr())
+	//fmt.Printf("Server [%s] starting fileserver...\n", s.Transport.Addr())
+	utils.Logger.Printf("Server [%s] starting fileserver...\n", s.Transport.Addr())
 	if err := s.Transport.ListenAddAccept(); err != nil {
 		return err
 	}
@@ -105,9 +106,11 @@ func (s *FileServer) loop() {
 		select {
 		case rpc := <-s.Transport.Consume():
 			var message Message
+
 			if err := gob.NewDecoder(bytes.NewReader(rpc.Payload)).Decode(&message); err != nil {
 				log.Println("decoding error: ", err)
 			}
+			fmt.Printf("server [%s] got a message is: %#v \n", s.Transport.Addr(), message)
 			if err := s.handleMessage(rpc.From, &message); err != nil {
 				log.Println("handle message error: ", err)
 			}
@@ -159,7 +162,7 @@ func (s *FileServer) OnPeer(peer p2p.Peer) error {
 	s.peerLock.Lock()
 	defer s.peerLock.Unlock()
 	s.peers[peer.RemoteAddr().String()] = peer
-	log.Printf("connected with remote %s", peer.RemoteAddr())
+	//log.Printf("connected with remote %s", peer.RemoteAddr())
 	return nil
 }
 

@@ -3,7 +3,7 @@ package p2p
 import (
 	"errors"
 	"fmt"
-	"log"
+	"github/yanCode/go-d/utils"
 	"net"
 	"sync"
 )
@@ -71,7 +71,8 @@ func (t *TCPTransport) ListenAddAccept() error {
 		return err
 	}
 	go t.startAcceptLoop()
-	log.Printf("TCP transport listening on port: %s\n", t.ListenAddr)
+	addr := t.ListenAddr
+	utils.Logger.Printf("Server:[%s] TCP transport listening on port: %s\n", addr, addr)
 	return nil
 }
 
@@ -84,7 +85,7 @@ func (t *TCPTransport) startAcceptLoop() {
 		if err != nil {
 			fmt.Printf("TCP accept error: %v\n", err)
 		}
-		fmt.Printf("new incomming connection: %v\n", conn)
+		fmt.Printf("Server: [%s] got new incoming connection from: %s\n", t.listener.Addr(), conn.RemoteAddr())
 		go t.handleConn(conn, false)
 	}
 }
@@ -93,6 +94,8 @@ func (t *TCPTransport) Dial(address string) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("Server: [%s] got new outgoing connection from: %s\n", t.Addr(), conn.RemoteAddr())
 	go t.handleConn(conn, true)
 	return nil
 }
@@ -111,6 +114,7 @@ func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
 		return
 	}
 	if t.OnPeer != nil {
+		fmt.Printf("server: [ %s] is about to add new peer: %s\n", t.Addr(), peer.RemoteAddr())
 		if err = t.OnPeer(peer); err != nil {
 			conn.Close()
 			fmt.Printf("OnPeer error: %v\n", err)
