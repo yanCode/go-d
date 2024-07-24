@@ -34,6 +34,7 @@ func NewFileServer(opts FileServerOptions) *FileServer {
 	storeOpts := StorageOpts{
 		RootDir:           opts.StorageRoot,
 		PathTransformFunc: opts.PathTransformFunc,
+		ListenAddr:        opts.Transport.Addr(), //this is used to debug the server address
 	}
 	if len(opts.ID) == 0 {
 		opts.ID = generateId()

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github/yanCode/go-d/utils"
 	"io"
 	"log"
 	"os"
@@ -60,6 +61,7 @@ var DefaultPathTransformFunc = func(key string) PathKey {
 type StorageOpts struct {
 	RootDir           string
 	PathTransformFunc PathTransformFunc
+	ListenAddr        string //this is used to debug the server address
 }
 type Storage struct {
 	StorageOpts
@@ -114,9 +116,11 @@ func (s *Storage) openFileForWriting(id string, key string) (*os.File, error) {
 	if err := os.MkdirAll(pathNameWithRoot, os.ModePerm); err != nil {
 		return nil, err
 	}
-	fullPathWithRoot := fmt.Sprintf("%s/%s/%s", s.RootDir, id, pathkey.FullPath())
-	return os.Create(filepath.Join(fullPathWithRoot))
+	fullPathWithRoot := filepath.Join(s.RootDir, id, pathkey.FullPath())
+	utils.Logger.Printf("Server[%s] is creating a file to write in: %s\n", s.ListenAddr, fullPathWithRoot)
+	return os.Create(fullPathWithRoot)
 }
+
 func (s *Storage) WriteDecrypt(encKey []byte, id string, key string, r io.Reader) (int64, error) {
 	f, err := s.openFileForWriting(id, key)
 	if err != nil {
@@ -134,12 +138,7 @@ func (s *Storage) writeStream(id string, key string, reader io.Reader) (int64, e
 		return 0, err
 	}
 	defer file.Close()
-	fmt.Printf("file path: %s", file.Name())
-	writeString, err := file.WriteString("I am writing something....")
-	if err != nil {
-		return 0, err
-	}
-	fmt.Printf("wrote %d bytes\n", writeString)
+
 	return io.Copy(file, reader)
 
 }

@@ -33,7 +33,7 @@ func main() {
 	utils.Logger.Println("start to mimic  2 file servers ....")
 	s1 := makeServer(":3000", "")
 	//s2 := makeServer(":8002", "")
-	s3 := makeServer(":4000", ":3000")
+	s3 := makeServer(":4000")
 	go func() { log.Fatal(s1.Start()) }()
 	time.Sleep(500 * time.Millisecond)
 	//go func() { log.Fatal(s2.Start()) }()
@@ -45,7 +45,7 @@ func main() {
 	//for i := 0; i < 1; i++ {
 	i := 1
 	key := fmt.Sprintf("picture_%d.png", i)
-	data := bytes.NewReader([]byte("my big data file here!"))
+	data := bytes.NewReader([]byte("my big data file here! which is very very big"))
 	err := s3.Store(key, data)
 	if err != nil {
 		log.Fatal(err)
