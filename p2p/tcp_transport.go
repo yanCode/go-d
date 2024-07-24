@@ -83,9 +83,9 @@ func (t *TCPTransport) startAcceptLoop() {
 			return
 		}
 		if err != nil {
-			fmt.Printf("TCP accept error: %v\n", err)
+			utils.Logger.Printf("Server[%s]: TCP accept error: %v\n", t.ListenAddr, err)
 		}
-		fmt.Printf("Server: [%s] got new incoming connection from: %s\n", t.listener.Addr(), conn.RemoteAddr())
+		utils.Logger.Printf("Server[%s]: accept new incoming connection from: %s\n", t.ListenAddr, conn.RemoteAddr())
 		go t.handleConn(conn, false)
 	}
 }
@@ -95,7 +95,7 @@ func (t *TCPTransport) Dial(address string) error {
 		return err
 	}
 
-	fmt.Printf("Server: [%s] got new outgoing connection from: %s\n", t.Addr(), conn.RemoteAddr())
+	utils.Logger.Printf("Server: [%s]  New outgoing connection dialed from: %s\n", t.ListenAddr, conn.RemoteAddr())
 	go t.handleConn(conn, true)
 	return nil
 }
@@ -103,21 +103,20 @@ func (t *TCPTransport) Dial(address string) error {
 func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
 	var err error
 	defer func() {
-		fmt.Printf("closing connection: %v\n", conn)
+		utils.Logger.Printf("closing connection: %v\n", conn)
 		conn.Close()
 	}()
 	peer := NewTcpPeer(conn, isOutbound)
-	fmt.Printf("new peer: %v\n", peer)
 	if err = t.HandshakeFunc(peer); err != nil {
 		conn.Close()
 		fmt.Printf("TCP handshake error: %v\n", err)
 		return
 	}
 	if t.OnPeer != nil {
-		fmt.Printf("server: [ %s] is about to add new peer: %s\n", t.Addr(), peer.RemoteAddr())
+		utils.Logger.Printf("server: [ %s] is about to add new peer from: %s\n", t.Addr(), peer.RemoteAddr())
 		if err = t.OnPeer(peer); err != nil {
 			conn.Close()
-			fmt.Printf("OnPeer error: %v\n", err)
+			utils.Logger.Printf("OnPeer error: %v\n", err)
 			return
 		}
 	}
@@ -125,15 +124,15 @@ func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
 	for {
 		rpc := Rpc{}
 		if err := t.Decoder.Decode(conn, &rpc); err != nil {
-			fmt.Printf("TCP error reading message: %v\n", err)
+			utils.Logger.Printf("[%s] TCP error reading message:  %v\n", err)
 			return
 		}
 		rpc.From = conn.RemoteAddr().String()
 		if rpc.Stream {
 			peer.waitGroup.Add(1)
-			fmt.Printf("[%s] incoming stream, waiting...\n", conn.RemoteAddr())
+			utils.Logger.Printf("[%s] incoming stream, waiting...\n", conn.RemoteAddr())
 			peer.waitGroup.Wait()
-			fmt.Printf("[%s] stream closed, resuming read loop\n", conn.RemoteAddr())
+			utils.Logger.Printf("[%s] stream closed, resuming read loop\n", conn.RemoteAddr())
 			continue
 		}
 		t.rpcCh <- rpc

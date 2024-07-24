@@ -69,12 +69,12 @@ func (s *FileServer) bootstrapNetwork() error {
 			continue
 		}
 		go func(addr string) {
-			fmt.Printf("[%s] attempting to connect to  remote: %s\n", s.Transport.Addr(), addr)
+			utils.Logger.Printf("[%s] attempting to connect to  remote: %s\n", s.Transport.Addr(), addr)
 			if err := s.Transport.Dial(addr); err != nil {
 				log.Println("dial error:", err)
 				panic(err)
 			}
-			fmt.Printf("server {%s} successfully  connected to remote: %s\n ", s.Transport.Addr(), addr)
+			utils.Logger.Printf("server {%s} successfully  connected to remote: %s\n ", s.Transport.Addr(), addr)
 		}(addr)
 	}
 	return nil
