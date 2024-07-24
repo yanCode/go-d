@@ -128,11 +128,11 @@ func (s *FileServer) Stop() {
 }
 func (s *FileServer) Get(key string) (io.Reader, error) {
 	if s.storage.Has(s.ID, key) {
-		fmt.Printf("[%s] serving file (%s) from local disk\n", s.Transport.Addr(), key)
+		utils.Logger.Printf("[%s] serving file (%s) from local disk\n", s.Transport.Addr(), key)
 		_, r, err := s.storage.Read(s.ID, key)
 		return r, err
 	}
-	fmt.Printf("[%s] serving file (%s) from network\n", s.Transport.Addr(), key)
+	utils.Logger.Printf("[%s] have not found file (%s) locally, retreive from network\n", s.Transport.Addr(), key)
 	msg := Message{Payload: MessageGetFile{
 		ID:  s.ID,
 		Key: hashKey(key),
@@ -141,6 +141,7 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 		return nil, err
 	}
 	time.Sleep(time.Millisecond * 500)
+
 	for _, peer := range s.peers {
 		// First read the file size, so we can limit the amount of bytes that we read
 		// from the connection, so it will not keep hanging.
@@ -149,7 +150,8 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 		if err != nil {
 			return nil, err
 		}
-		n, err := s.storage.WriteDecrypt(s.EncKey, s.ID, key, io.LimitReader(peer, fileSize))
+		//n, err := s.storage.WriteDecrypt(s.EncKey, s.ID, key, io.LimitReader(peer, fileSize))
+		n, err := s.storage.Write(s.ID, key, io.LimitReader(peer, fileSize))
 		if err != nil {
 			return nil, err
 		}

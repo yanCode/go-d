@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github/yanCode/go-d/p2p"
 	"github/yanCode/go-d/utils"
+	"io"
 	"log"
 	"time"
 )
@@ -50,19 +51,21 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	select {}
-	//if err := s3.storage.Delete(s3.ID, key); err != nil {
-	//	log.Fatal(err)
-	//}
-	//r, err := s3.Get(key)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//b, err := io.ReadAll(r)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 
-	//fmt.Println(string(b))
+	if err := s3.storage.Delete(s3.ID, key); err != nil {
+		log.Fatal(err)
+	}
+
+	r, err := s3.Get(key)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	result, err := io.ReadAll(r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(string(result))
 	//}
 }

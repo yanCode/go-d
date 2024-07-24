@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"github/yanCode/go-d/utils"
 	"io"
-	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -80,12 +80,13 @@ func (s *Storage) Read(id string, key string) (int64, io.Reader, error) {
 	return s.readStream(id, key)
 }
 
+// only delete a file from current server.
 func (s *Storage) Delete(id string, key string) error {
 	pathKey := s.PathTransformFunc(key)
 	defer func() {
-		log.Printf("deleted [%s] from disk", pathKey.FileName)
+		utils.Logger.Printf("Server[%s]: deleted [%s] from disk", s.ListenAddr, pathKey.FileName)
 	}()
-	firstPathNameWithRoot := fmt.Sprintf("%s/%s/%s", s.RootDir, id, pathKey.FirstPathName())
+	firstPathNameWithRoot := path.Join(s.RootDir, id, pathKey.FirstPathName())
 	return os.RemoveAll(firstPathNameWithRoot)
 }
 
