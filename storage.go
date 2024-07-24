@@ -117,7 +117,7 @@ func (s *Storage) openFileForWriting(id string, key string) (*os.File, error) {
 		return nil, err
 	}
 	fullPathWithRoot := filepath.Join(s.RootDir, id, pathkey.FullPath())
-	utils.Logger.Printf("Server[%s] is creating a file to write in: %s\n", s.ListenAddr, fullPathWithRoot)
+	utils.Logger.Printf("Server[%s] create a file for writting in: %s\n", s.ListenAddr, fullPathWithRoot)
 	return os.Create(fullPathWithRoot)
 }
 

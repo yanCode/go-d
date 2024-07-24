@@ -33,7 +33,7 @@ func main() {
 	utils.Logger.Println("start to mimic  2 file servers ....")
 	s1 := makeServer(":3000", "")
 	//s2 := makeServer(":8002", "")
-	s3 := makeServer(":4000")
+	s3 := makeServer(":4000", ":3000")
 	go func() { log.Fatal(s1.Start()) }()
 	time.Sleep(500 * time.Millisecond)
 	//go func() { log.Fatal(s2.Start()) }()
@@ -50,6 +50,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	select {}
 	//if err := s3.storage.Delete(s3.ID, key); err != nil {
 	//	log.Fatal(err)
 	//}

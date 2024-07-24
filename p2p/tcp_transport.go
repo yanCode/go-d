@@ -113,7 +113,7 @@ func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
 		return
 	}
 	if t.OnPeer != nil {
-		utils.Logger.Printf("server: [ %s] is about to add new peer from: %s\n", t.Addr(), peer.RemoteAddr())
+		utils.Logger.Printf("server[ %s]: add a new peer from: %s\n", t.Addr(), peer.RemoteAddr())
 		if err = t.OnPeer(peer); err != nil {
 			conn.Close()
 			utils.Logger.Printf("OnPeer error: %v\n", err)
@@ -127,12 +127,14 @@ func (t *TCPTransport) handleConn(conn net.Conn, isOutbound bool) {
 			utils.Logger.Printf("[%s] TCP error reading message:  %v\n", err)
 			return
 		}
+		utils.Logger.Printf("server: [ %s] A peer from: %s accepted a PRC of which steam = %t... \n", t.ListenAddr, peer.RemoteAddr(), rpc.Stream)
+		//utils.Logger.Printf("%s", string(rpc.Payload))
 		rpc.From = conn.RemoteAddr().String()
 		if rpc.Stream {
 			peer.waitGroup.Add(1)
-			utils.Logger.Printf("[%s] incoming stream, waiting...\n", conn.RemoteAddr())
+			utils.Logger.Printf("[%s] there is an incoming stream, waiting...\n", conn.RemoteAddr())
 			peer.waitGroup.Wait()
-			utils.Logger.Printf("[%s] stream closed, resuming read loop\n", conn.RemoteAddr())
+			utils.Logger.Printf("[%s] the stream closed, resuming read loop\n", conn.RemoteAddr())
 			continue
 		}
 		t.rpcCh <- rpc
