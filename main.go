@@ -43,29 +43,29 @@ func main() {
 		log.Fatal(s3.Start())
 	}()
 	time.Sleep(2 * time.Second)
-	//for i := 0; i < 1; i++ {
-	i := 1
-	key := fmt.Sprintf("picture_%d.png", i)
-	data := bytes.NewReader([]byte("my big data file here! which is very very big"))
-	err := s3.Store(key, data)
-	if err != nil {
-		log.Fatal(err)
-	}
+	for i := 0; i < 10; i++ {
+		//i := 1
+		key := fmt.Sprintf("picture_%d.png", i)
+		data := bytes.NewReader([]byte("my big data file here! which is very very big"))
+		err := s3.Store(key, data)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	if err := s3.storage.Delete(s3.ID, key); err != nil {
-		log.Fatal(err)
-	}
+		if err := s3.storage.Delete(s3.ID, key); err != nil {
+			log.Fatal(err)
+		}
 
-	r, err := s3.Get(key)
-	if err != nil {
-		log.Fatal(err)
-	}
+		r, err := s3.Get(key)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	result, err := io.ReadAll(r)
-	if err != nil {
-		log.Fatal(err)
-	}
+		result, err := io.ReadAll(r)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	fmt.Println(string(result))
-	//}
+		fmt.Println(string(result))
+	}
 }

@@ -114,7 +114,7 @@ func (s *FileServer) handleChanIncoming() {
 			}
 			fmt.Printf("Server [%s] from rpcCh get a message is: %+v \n", s.Transport.Addr(), message)
 			if err := s.handleMessage(rpc.From, &message); err != nil {
-				utils.Logger.Printf("Server [%s] handle message error: ", s.Transport.Addr(), err)
+				utils.Logger.Printf("Server [%s] handle message error: %+v", s.Transport.Addr(), err)
 			}
 
 		case <-s.quitCh:
@@ -150,8 +150,8 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 		if err != nil {
 			return nil, err
 		}
-		//n, err := s.storage.WriteDecrypt(s.EncKey, s.ID, key, io.LimitReader(peer, fileSize))
-		n, err := s.storage.Write(s.ID, key, io.LimitReader(peer, fileSize))
+		n, err := s.storage.WriteDecrypt(s.EncKey, s.ID, key, io.LimitReader(peer, fileSize))
+		//n, err := s.storage.Write(s.ID, key, io.LimitReader(peer, fileSize))
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +202,7 @@ func (s *FileServer) Store(key string, reader io.Reader) error {
 		Payload: MessageStoreFile{
 			ID:   s.ID,
 			Key:  hashKey(key),
-			Size: size,
+			Size: size + 16,
 		},
 	}
 	if err := s.broadcast(&msg); err != nil {
@@ -219,8 +219,8 @@ func (s *FileServer) Store(key string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	//n, err := copyEncrypt(s.EncKey, fileBuffer, mw)
-	n, err := io.Copy(mw, fileBuffer)
+	n, err := copyEncrypt(s.EncKey, fileBuffer, mw)
+	//n, err := io.Copy(mw, fileBuffer)
 	utils.Logger.Printf("[%s] Store file Successfully completed, received and written (%d) bytes to disk\n", s.Transport.Addr(), n)
 	return nil
 }
