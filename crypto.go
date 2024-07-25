@@ -39,11 +39,19 @@ func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	iv := make([]byte, block.BlockSize())
 
-	if _, err := src.Read(iv); err != nil {
+	iv := make([]byte, block.BlockSize()) // 16 bytes
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return 0, err
 	}
+
+	// prepend the IV to the file.
+	if _, err := dst.Write(iv); err != nil {
+		return 0, err
+	}
+	//if _, err := src.Read(iv); err != nil {
+	//	return 0, err
+	//}
 	stream := cipher.NewCTR(block, iv)
 	return copyStream(stream, block.BlockSize(), src, dst)
 }
